@@ -23,12 +23,13 @@ import 'package:riverpod/riverpod.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:stream_channel/stream_channel.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 
-import 'package:chat/sdk.dart';
-import 'package:chat/ui.dart';
-import 'package:chat/model.dart' as types;
+import 'package:flutter_messaging_base/sdk.dart';
+import 'package:flutter_messaging_base/ui.dart';
+import 'package:flutter_messaging_base/model.dart' as types;
 
 import 'chatwoot/params.dart';
 import 'chatwoot/callbacks.dart';
@@ -46,72 +47,6 @@ import 'chatwoot/requests/chatwoot_new_message_request.dart';
 
 import 'l10n.dart';
 import 'theme.dart';
-
-class FakeData {
-  List<types.Message> messages = [];
-  List<Conversation> conversations = [];
-
-  types.User get other => const types.User(
-      id: 'c77ec460-75b7-4384-9447-d6334e3440dc ',
-      firstName: "Lawrence",
-      lastName: "Kok",
-      imageUrl:
-          "https://www.gravatar.com/avatar/88786f5ef8d4b38a9c2738615051cb19?s=48&d=identicon&r=PG");
-
-  types.User get author => const types.User(
-      id: '06c33e8b-e835-4736-80f4-63f44b66666c',
-      firstName: "Lawrence",
-      lastName: "Kok",
-      imageUrl:
-          "https://www.gravatar.com/avatar/88786f5ef8d4b38a9c2738615051cb19?s=48&d=identicon&r=PG");
-
-  void _addConversation(String conversationId) {
-    conversations.add(Conversation(conversationId,
-        unread: messages
-            .where((element) =>
-                element.roomId == conversationId &&
-                element.author == author &&
-                element.status!.index < types.Status.seen.index)
-            .length));
-  }
-
-  void generate(int conversations) {
-    for (int i = 0; i < conversations; ++i) {
-      messages.add(types.TextMessage(
-          id: "1",
-          roomId: i.toString(),
-          text: "1",
-          author: other,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          status: types.Status.delivered));
-      messages.add(types.TextMessage(
-          id: "2",
-          roomId: i.toString(),
-          text: "1",
-          author: author,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          status: types.Status.delivered));
-      messages.add(types.TextMessage(
-          id: "3",
-          roomId: i.toString(),
-          text: "1",
-          author: author,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          status: types.Status.delivered));
-      messages.add(types.TextMessage(
-          id: "4",
-          roomId: i.toString(),
-          text: "1",
-          author: other,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          status: types.Status.sent));
-    }
-
-    for (int i = 0; i < conversations; ++i) {
-      _addConversation(i.toString());
-    }
-  }
-}
 
 class ChatwootPersistance extends Persistance {
   final ChatwootSDK sdk;
@@ -141,6 +76,7 @@ class ChatwootSDK extends SDK {
   late ChatwootParameters _parameters;
   late ChatwootUser _user;
 
+  final StreamController _errors = StreamController.broadcast();
   List<ChatwootCallbacks> _wscallbacks = [];
   List<StreamSubscription> _subscriptions = [];
   bool _isListeningForEvents = false;
@@ -175,6 +111,8 @@ class ChatwootSDK extends SDK {
   types.User get author => _author;
 
   bool get online => _isonline;
+
+  Stream get errors => _errors.stream;
 
   ChatwootSDK(
       {bool showUserAvatars = true,
@@ -388,6 +326,23 @@ class ChatwootSDK extends SDK {
   }
 
   @override
+  void addMessage(types.Message message) {
+    /*
+    var matchingConversations =
+        conversations.where((element) => element.uuid == message.roomId);
+    if (matchingConversations.isEmpty) {
+      var conv = Conversation(message.roomId!, unread: 0);
+      messages.add(message);
+      conversations.add(conv);
+      _conversationController.add(conv);
+    } else {
+      messages.add(message);
+      _conversationController.add(matchingConversations.first);
+    }
+    */
+  }
+
+  @override
   Future<Conversation> create() async =>
       Future.value(Conversation(await newConversationId()));
 
@@ -585,6 +540,8 @@ class ChatwootSDK extends SDK {
       } else {
         print("chatwoot unknown event: $event");
       }
+    }, onError: (_, __) {
+      FlutterError.reportError(FlutterErrorDetails(exception: _, stack: __));
     });
     _subscriptions.add(newSubscription);
   }
@@ -657,10 +614,18 @@ class ChatwootConversationProvider extends ConversationProvider {
   String? _conversationId;
   final MessageCollection<types.Message> _messages =
       MessageCollection<types.Message>();
+  final StreamController _errors = StreamController.broadcast();
   final ValueNotifier<bool> _typing = ValueNotifier(false);
-  final ValueNotifier<bool> _status = ValueNotifier(false);
+  final ValueNotifier<bool> _status = ValueNotifier(true);
   final ValueNotifier<bool> _canReply = ValueNotifier(true);
+  final Completer<bool> _events = Completer<bool>();
   late ValueNotifier<bool> _isonline;
+
+  @override
+  Future<bool> get loaded => _events.future;
+
+  @override
+  Stream get errors => _errors.stream;
 
   @override
   SDK get sdk => _sdk;
@@ -871,7 +836,10 @@ class ChatwootConversationProvider extends ConversationProvider {
 
       sdk.getMessages(conversationId: conversationId).then((value) {
         _messages.addAll(value);
+        _events.complete(true);
       });
+    } else {
+      _events.complete(true);
     }
   }
 
@@ -884,7 +852,7 @@ class ChatwootConversationProvider extends ConversationProvider {
       avatarUrl = null;
     }
 
-    if (message.attachments?.isNotEmpty ?? true) {
+    if (message.attachments?.isNotEmpty ?? false) {
       return null;
     } else {
       if (message.messageType == 2) {
@@ -918,7 +886,7 @@ class ChatwootConversationProvider extends ConversationProvider {
   }
 
   void _handleMessageReceived(types.Message message) {
-    _messages.insert(0, message);
+    _messages.add(message);
     sdk.addMessage(message);
   }
 
@@ -977,7 +945,7 @@ class ChatwootConversationProvider extends ConversationProvider {
     //ChatwootCallbacks? origional = (sdk as ChatwootSDK).callbacks;
     if (message is types.TextMessage) {
       types.TextMessage msg = message;
-      _messages.insert(0, message);
+      _messages.add(message);
       sdk.addMessage(message);
 
       await _sdk.send(message);
@@ -1009,4 +977,10 @@ class ChatwootConversationProvider extends ConversationProvider {
   void endTyping() {
     _typing.value = false;
   }
+
+  @override
+  Future<void> resolve() => Future.value();
+
+  @override
+  Future<void> more() => Future.delayed(const Duration(seconds: 1));
 }

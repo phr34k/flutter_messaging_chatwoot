@@ -1,39 +1,73 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# flutter_messaging_chatwoot
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+This is an chatwoot backend implementation for the flutter_messaging_base library that aims to expose messaging backends in an unified approach. Making it easier for developers to integrate various backends in their app and provide rich customisations for it. This is an unofficial library, and is not supported by the origional authors.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+## Main repository
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+https://github.com/phr34k/flutter_messaging_chatwoot
 
-## Features
+## Installing
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+To get started simply add `flutter_messaging_chatwoot:` and the latest version to your pubspec.yaml. Then run `flutter pub get`
 
-## Getting started
+## Using the widget
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Integration with your app requires just a few lines of code. All that it requires is that you provide the `ChatwootSDK` provider, and the provider
+will help you generate page routes to navigate to your inbox or specific chats.
 
-## Usage
+```Dart
+import 'package:flutter_chat_chatwoot_sdk/sdk.chatwoot.dart';
+import 'package:flutter_chat_chatwoot_sdk/chatwoot/entity/chatwoot_user.dart';
+import 'package:flutter_chat_chatwoot_sdk/chatwoot/callbacks.dart';
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+void main() {
+  var path = Directory.current.path;
+  ChatwootSDK.register(Hive..init(path));
+  runApp(const MyApp());
+}
 
-```dart
-const like = 'sample';
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+        providers: [
+          Provider<SDK>(
+              create: (_) => ChatwootSDK(
+                  baseUrl: "https://app.chatwoot.com",
+                  inboxIdentifier: "<<<your-inbox-identifier-here>>>",
+                  user: ChatwootUser(
+                    identifier: "test@test.com",
+                    name: "Tester test",
+                    email: "test@test.com",
+                  ),
+                  callbacks: ChatwootCallbacks(
+                    
+                  )))
+        ],
+        builder: (_, __) => MaterialApp(
+              title: 'Flutter Demo',
+              theme: ThemeData(
+                primarySwatch: Colors.blue,
+              ),
+
+              initialRoute: '/',
+              onGenerateRoute: (route) {
+                if (route.name == '/') {
+                  return Provider.of<SDK>(_, listen: false).getDefaultInboxUI();
+                }
+
+                return null;
+              },
+
+              //home: const InboxPage(title: 'Flutter Demo Home Page'),
+            ));
+  }
+}
+    
 ```
+That should get you up and running in just a few seconds ⚡️.
 
-## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.

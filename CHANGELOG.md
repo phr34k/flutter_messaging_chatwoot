@@ -1,3 +1,3 @@
-## 0.0.1
+## [0.0.1] - 4/12/2022.
 
-* TODO: Describe initial release.
+Intial pre-release of flutter_messaging_chatwoot library

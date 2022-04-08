@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:chat/sdk.dart';
+import 'package:flutter_messaging_base/sdk.dart';
 
-import 'package:flutter_chat_chatwoot_sdk/sdk.chatwoot.dart';
-import 'package:flutter_chat_chatwoot_sdk/chatwoot/entity/chatwoot_user.dart';
-import 'package:flutter_chat_chatwoot_sdk/chatwoot/callbacks.dart';
+import 'package:flutter_messaging_chatwoot/sdk.chatwoot.dart';
+import 'package:flutter_messaging_chatwoot/chatwoot/entity/chatwoot_user.dart';
+import 'package:flutter_messaging_chatwoot/chatwoot/callbacks.dart';
 import 'dart:io';
 import 'package:hive/hive.dart';
 
