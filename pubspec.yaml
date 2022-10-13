@@ -13,7 +13,7 @@ dependencies:
   flutter_messaging_base: 
     git: 'https://github.com/phr34k/flutter_messaging_base.git'
   provider: any
-  flutter_chat_ui: ^1.5.5
+  flutter_chat_ui: ^1.6.5
   uuid: any
   file_picker: any
   image_picker: any
