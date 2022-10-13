@@ -23,7 +23,6 @@ import 'package:riverpod/riverpod.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:stream_channel/stream_channel.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 
@@ -347,7 +346,7 @@ class ChatwootSDK extends SDK {
       Future.value(Conversation(await newConversationId()));
 
   @override
-  ChatTheme getTheme() => theme ?? const ChatwootDefaultChatTheme();
+  ChatTheme getTheme() => theme ?? ChatwootDefaultChatTheme();
   @override
   ChatL10n getl10n() => l10n ?? const ChatwootDefaultL10n();
   @override
@@ -922,9 +921,12 @@ class ChatwootConversationProvider extends ConversationProvider {
   void updateMessage(types.Message message, types.PreviewData previewData) {
     final index = _messages.indexWhere((element) => element.id == message.id);
     final msg = _messages.collection[index];
-    final updatedMessage = msg.copyWith(previewData: previewData);
-    _messages.replace(index, updatedMessage);
-    sdk.updateMessage(updatedMessage);
+
+    if (msg is types.TextMessage) {
+      final updatedMessage = msg.copyWith(previewData: previewData);
+      _messages.replace(index, updatedMessage);
+      sdk.updateMessage(updatedMessage);
+    }
   }
 
   @override
@@ -952,7 +954,6 @@ class ChatwootConversationProvider extends ConversationProvider {
 
       //chatwootClient!.sendMessage(content: msg.text, echoId: message.id);
       //widget.onSendPressed?.call(message);
-
     } else if (message is types.FileMessage) {
       _messages.insert(0, message);
       sdk.addMessage(message);

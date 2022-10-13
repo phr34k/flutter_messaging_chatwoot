@@ -34,6 +34,10 @@ dependencies:
   intl: ^0.17.0  
   async: ^2.5.0
 
+dependency_overrides:
+  flutter_messaging_base:
+    path: ../flutter_messaging_base      
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

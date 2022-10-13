@@ -131,7 +131,18 @@ class ChatwootDefaultChatTheme extends ChatTheme {
   const ChatwootDefaultChatTheme({
     Widget? attachmentButtonIcon,
     Color backgroundColor = CHATWOOT_BG_COLOR,
-    EdgeInsetsGeometry dateDividerMargin = const EdgeInsets.only(
+    super.sendButtonMargin,
+    super.attachmentButtonMargin,
+    UnreadHeaderTheme unreadHeaderTheme = const UnreadHeaderTheme(
+      color: secondary,
+      textStyle: TextStyle(
+        color: neutral2,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        height: 1.333,
+      ),
+    ),
+    EdgeInsets dateDividerMargin = const EdgeInsets.only(
       bottom: 32,
       top: 16,
     ),
@@ -162,8 +173,8 @@ class ChatwootDefaultChatTheme extends ChatTheme {
       height: 1.5,
     ),
     Decoration? inputContainerDecoration,
-    EdgeInsetsGeometry inputPadding = const EdgeInsets.fromLTRB(24, 20, 24, 20),
-    EdgeInsetsGeometry inputMargin = const EdgeInsets.fromLTRB(8, 8, 8, 8),
+    EdgeInsets inputPadding = const EdgeInsets.fromLTRB(24, 20, 24, 20),
+    EdgeInsets inputMargin = const EdgeInsets.fromLTRB(8, 8, 8, 8),
     Color? inputTextCursorColor,
     InputDecoration inputTextDecoration = const InputDecoration(
       border: InputBorder.none,
@@ -243,10 +254,10 @@ class ChatwootDefaultChatTheme extends ChatTheme {
       fontWeight: FontWeight.w800,
       height: 1.333,
     ),
-    EdgeInsetsGeometry statusIconPadding =
-        const EdgeInsets.symmetric(horizontal: 4),
+    EdgeInsets statusIconPadding = const EdgeInsets.symmetric(horizontal: 4),
     Color userAvatarImageBackgroundColor = Colors.transparent,
   }) : super(
+          unreadHeaderTheme: unreadHeaderTheme,
           attachmentButtonIcon: attachmentButtonIcon,
           backgroundColor: backgroundColor,
           dateDividerMargin: dateDividerMargin,
